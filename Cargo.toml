@@ -1,0 +1,8 @@
+[package]
+name = "scrub"
+version = "0.0.0"
+authors = ["Emil Karlson <jekarlson@gmail.com>"]
+
+[dependencies]
+blkid = "0.2.0"
+btrfs = "1.2.0"
