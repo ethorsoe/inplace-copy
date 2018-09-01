@@ -37,6 +37,7 @@ fn main() {
 	let root_fd = fhandle.as_raw_fd();
 	let fs_info = linux::get_filesystem_info(root_fd).unwrap();
 	let uuid = fs_info.filesystem_id.hyphenated().to_string();
+	println!("Filesystem {} with {} devices", &uuid, fs_info.num_devices);
 
 	do_blkid(&uuid);
 }
