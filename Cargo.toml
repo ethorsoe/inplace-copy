@@ -5,3 +5,4 @@ authors = ["Emil Karlson <jekarlson@gmail.com>"]
 
 [dependencies]
 nix = "0.13.0"
+libc = "0.2.0"
