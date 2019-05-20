@@ -22,8 +22,25 @@ fn copy_block(fhandles: &mut Vec<BufferedFile>, offset: u64) -> bool {
 			BUFFER_SIZE as libc::size_t, offset as libc::off64_t) as u64;
 	}}
 	let last_read = fhandles[0].last_read;
+	let olast_read = fhandles[1].last_read;	
 	if BUFFER_SIZE as u64 != last_read {
 		eprintln!("Pread return {} not {} at {}", last_read, BUFFER_SIZE, offset);
+	}
+	if last_read < olast_read {
+		eprintln!("Pread return {} of outfile larger than infile return {}",
+			olast_read, last_read);
+	}
+	if fhandles[0].buffer[0..last_read as usize] != fhandles[1].buffer[0..last_read as usize] ||
+			olast_read < last_read {
+		unsafe {
+			let written = libc::pwrite64(fhandles[1].file.as_raw_fd(),
+				(fhandles[0].buffer[..].as_mut_ptr()) as *mut libc::c_void,
+				last_read as libc::size_t, offset as libc::off64_t) as u64;
+			if last_read != written {
+				panic!("Write of {} bytes to outfile at offset {} returned {}",
+					last_read, offset, written);
+			}
+		}
 	}
 	return last_read == BUFFER_SIZE as u64;
 }
