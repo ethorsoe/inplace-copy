@@ -53,7 +53,8 @@ fn main() {
 	let mut args_iter = env::args_os().into_iter();
 	args_iter.next();
 	let mut fhandles : Vec<BufferedFile> = args_iter.map(|s| BufferedFile {
-		file: File::open(&s).expect((String::from("No such file ") + s.into_string()
+		file: std::fs::OpenOptions::new().read(true).write(true).open(&s)
+			.expect((String::from("No such file ") + s.into_string()
 			.expect("File with unprintable name can't be opened").as_str()).as_str()),
 		last_read: 0,
 		buffer: [0; BUFFER_SIZE],
