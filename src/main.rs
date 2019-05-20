@@ -11,17 +11,21 @@ const BUFFER_SIZE: usize = 4096;
 
 struct BufferedFile {
 	file: File,
+	last_read: u64,
 	buffer: [u8; BUFFER_SIZE],
 }
 
 fn copy_block(fhandles: &mut Vec<BufferedFile>, offset: u64) -> bool {
 	for bf in &mut*fhandles { unsafe {
-		libc::pread64(bf.file.as_raw_fd(),
+		bf.last_read = libc::pread64(bf.file.as_raw_fd(),
 			(bf.buffer[0..BUFFER_SIZE].as_mut_ptr()) as *mut libc::c_void,
-			BUFFER_SIZE as libc::size_t, offset as libc::off64_t);
+			BUFFER_SIZE as libc::size_t, offset as libc::off64_t) as u64;
 	}}
-	
-	return fhandles[0].buffer[0..BUFFER_SIZE] != fhandles[1].buffer[0..BUFFER_SIZE];
+	let last_read = fhandles[0].last_read;
+	if BUFFER_SIZE as u64 != last_read {
+		eprintln!("Pread return {} not {} at {}", last_read, BUFFER_SIZE, offset);
+	}
+	return last_read == BUFFER_SIZE as u64;
 }
 
 fn main() {
@@ -34,10 +38,9 @@ fn main() {
 	let mut fhandles : Vec<BufferedFile> = args_iter.map(|s| BufferedFile {
 		file: File::open(&s).expect((String::from("No such file ") + s.into_string()
 			.expect("File with unprintable name can't be opened").as_str()).as_str()),
+		last_read: 0,
 		buffer: [0; BUFFER_SIZE],
 	}).collect();
-	let first_fd = fhandles[0].file.as_raw_fd();
-	println!("firstfd {}", &first_fd);
 	let mut counter: u64 = 0;
 	while copy_block(&mut fhandles, counter) {
 		counter += BUFFER_SIZE as u64;
